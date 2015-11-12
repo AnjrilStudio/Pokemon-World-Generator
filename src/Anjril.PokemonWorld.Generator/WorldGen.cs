@@ -14,19 +14,24 @@ namespace Anjril.PokemonWorld.Generator
     {
         public const int subWidth = 100;
         public const int subHeight = 100;
-        
+
         public int Width { get; set; }
         public int Height { get; set; }
         public string Output { get; set; }
+        public bool GenerateGif { get; set; }
+        public bool GeneratePng { get; set; }
 
         private SubWorld[,] _subworlds;
         private Random _random;
 
-        public WorldGen(int width, int height, string output)
+        public WorldGen(int width, int height, string output,
+            bool generatePng = false, bool generateGif = false)
         {
             this.Width = width;
             this.Height = height;
             this.Output = output;
+            this.GenerateGif = generateGif;
+            this.GeneratePng = GeneratePng;
 
             this._random = new Random();
             this._subworlds = new SubWorld[1 + Width / subWidth, 1 + Height / subHeight];
@@ -73,44 +78,51 @@ namespace Anjril.PokemonWorld.Generator
             sources.Add(new AreaTile(4, -3));
             sources.Add(new AreaTile(4, -4));
             Mountain2(320, 320, 6000, sources);
-            
+
             //saveBitmap(createBitmap(), 1);
 
-            List<Bitmap> frames = FillMap();
-            SaveBitmap(CreateBitmap(), 1);
             SaveJSON();
-            //saveGif(frames);
 
-            //saveBitmap(createBitmap(), 2);
+            if (this.GeneratePng)
+            {
+                SaveBitmap(CreateBitmap(), 1);
+            }
 
-            /*sea(500, 850, 10, 1, 15, 3000);
-            coast(550, 650, 10, 1, 10, 2000);
-            coast(450, 750, 1, 10, 10, 2000);
-            forest(200, 300, 500);
-            createBitmap(1);
+            if (this.GenerateGif)
+            {
+                List<Bitmap> frames = FillMap();
+                SaveGif(frames);
+            }
 
-            town(200, 500, 70);
-            town(200, 700, 50);
-            town(200, 200, 100);
-            town(200, 850, 50);
+            //SaveBitmap(createBitmap(), 2);
 
-            town(600, 200, 100);
-            town(600, 450, 150);
-            town(600, 600, 100);
-            town(600, 750, 80);
-            town(450, 400, 150);
-            town(750, 400, 70);
+            /*Sea(500, 850, 10, 1, 15, 3000);
+            Coast(550, 650, 10, 1, 10, 2000);
+            Coast(450, 750, 1, 10, 10, 2000);
+            Forest(200, 300, 500);
+            CreateBitmap(1);
 
-            createBitmap(2);
+            Town(200, 500, 70);
+            Town(200, 700, 50);
+            Town(200, 850, 50);
+
+            Town(600, 200, 100);
+            Town(600, 450, 150);
+            Town(600, 600, 100);
+            Town(600, 750, 80);
+            Town(450, 400, 150);
+            Town(750, 400, 70);
+
+            CreateBitmap(2);
             
-            mountain(600, 100, 8, 1, 20, 5000, 4);
-            mountain(100, 300, 1, 8, 20, 5000, 4);
+            Mountain(600, 100, 8, 1, 20, 5000, 4);
+            Mountain(100, 300, 1, 8, 20, 5000, 4);
             
-            createBitmap(2);
+            CreateBitmap(2);
 
-            fillMap();
+            FillMap();
 
-            createBitmap(4);*/
+            CreateBitmap(4);*/
         }
 
         #region private methods
