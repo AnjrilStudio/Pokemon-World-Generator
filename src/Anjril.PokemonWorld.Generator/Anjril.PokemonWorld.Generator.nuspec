@@ -1,16 +1,20 @@
 <?xml version="1.0"?>
 <package>
-	<metadata>
-		<id>$id$</id>
-		<version>$version$</version>
-		<title>$title$</title>
-		<authors>$author$</authors>
-		<owners>$author$</owners>
-		<licenseUrl>https://github.com/AnjrilStudio/Pokemon-World-Generator/blob/master/LICENSE</licenseUrl>
-		<projectUrl>https://github.com/AnjrilStudio/Pokemon-World-Generator/</projectUrl>
-		<requireLicenseAcceptance>false</requireLicenseAcceptance>
-		<description>$description$</description>
-		<releaseNotes>https://github.com/AnjrilStudio/Pokemon-World-Generator/releases</releaseNotes>
-		<copyright>Copyright 2015</copyright>
-	</metadata>
+  <metadata>
+    <id>$id$</id>
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>
+    <licenseUrl>https://github.com/AnjrilStudio/Pokemon-World-Generator/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/AnjrilStudio/Pokemon-World-Generator/</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>$description$</description>
+    <releaseNotes>https://github.com/AnjrilStudio/Pokemon-World-Generator/releases</releaseNotes>
+    <copyright>Copyright 2015</copyright>
+  </metadata>
+  <files>
+    <file src="bin\$configuration$\Gif.Components.dll" target="lib\net46" />
+    <file src="bin\$configuration$\NGif.dll" target="lib\net46" />
+  </files>
 </package>
