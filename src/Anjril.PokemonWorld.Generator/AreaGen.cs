@@ -45,6 +45,7 @@ namespace Anjril.PokemonWorld.Generator
                 if (!isLast) k = random.Next(4);
 
                 //int d = (random.Next(2) * 2) - 1;
+                //technique pour rendre aléatoire l'ordre d'ajout des nouvelles bordures
                 int d = 1;
                 k = (k + d) % 4;
                 if (k < 0) k += 4;
@@ -88,10 +89,13 @@ namespace Anjril.PokemonWorld.Generator
                 if (k < 0) k += 4;
             }
 
-            if (rmBorder > 0) RemoveBorder(passable, border, rmBorder, random);
-            if (rmNoBorder > 0) RemoveNoBorder(passable, border, rmNoBorder, random, false);
+            var passableSet = new HashSet<AreaTile>(passable);
+            var borderSet = new HashSet<AreaTile>(border);
 
-            _tiles = ListToMatrix(passable, border, resolution, random, noise);
+            if (rmBorder > 0) RemoveBorder(passableSet, borderSet, rmBorder, random);
+            if (rmNoBorder > 0) RemoveNoBorder(passableSet, borderSet, rmNoBorder, random, false);
+            
+            _tiles = ListToMatrix(passableSet, borderSet, resolution, random, noise);
             return border;
         }
 
@@ -186,20 +190,24 @@ namespace Anjril.PokemonWorld.Generator
                 k = (k - d) % 4;
                 if (k < 0) k += 4;
             }
-            if (rmBorder > 0) RemoveBorder(passable, border, rmBorder, random);
-            if (rmNoBorder > 0) RemoveNoBorder(passable, border, rmNoBorder, random, false);
 
+            var passableSet = new HashSet<AreaTile>(passable);
+            var borderSet = new HashSet<AreaTile>(border);
 
-            _tiles = ListToMatrix(passable, border, resolution, random, noise);
+            if (rmBorder > 0) RemoveBorder(passableSet, borderSet, rmBorder, random);
+            if (rmNoBorder > 0) RemoveNoBorder(passableSet, borderSet, rmNoBorder, random, false);
+
+            
+            _tiles = ListToMatrix(passableSet, borderSet, resolution, random, noise);
         }
 
-        public void LineGen(int deltaX, int deltaY, int resolution, int noise, double proba)
+        public void LineGen(int deltaX, int deltaY, double noise, int minDeriv, int resolution, double proba, int thickness)
         {
             random = new Random();
-            List<AreaTile> passable = new List<AreaTile>();
+            HashSet<AreaTile> passable = new HashSet<AreaTile>();
             AreaTile currentTile = new AreaTile(0, 0);
             passable.Add(currentTile);
-            List<AreaTile> border = new List<AreaTile>();
+            HashSet<AreaTile> border = new HashSet<AreaTile>();
             border.Add(new AreaTile(1, 0));
             border.Add(new AreaTile(-1, 0));
             border.Add(new AreaTile(0, 1));
@@ -209,18 +217,20 @@ namespace Anjril.PokemonWorld.Generator
             AreaTile nextTile;
             while (!passable.Contains(new AreaTile(deltaX, deltaY)))
             {
-                int dxtmp, dytmp, ddx, ddy, dx, dy, currentX, currentY, X, Y;
+                int dist, dxtmp, dytmp, ddx, ddy, dx, dy, currentX, currentY, X, Y;
                 ddx = 0;
                 ddy = 0;
                 do
                 {
                     dxtmp = deltaX - currentTile.X;
                     dytmp = deltaY - currentTile.Y;
+                    dist = Math.Abs(dxtmp) + Math.Abs(dytmp);
 
-                    if (Math.Abs(dxtmp) + Math.Abs(dytmp) > 5) //todo calculer 5
+
+                    if (dist > (Math.Abs(deltaX) + Math.Abs(deltaY)) * 0.02) // 2% de la distance
                     {
-                        ddx = (int)Math.Round((random.NextDouble() * 2 - 1) * noise * (double)(Math.Abs(dytmp)) * (double)(Math.Abs(deltaX) + 10) / (double)(Math.Abs(deltaY) + 10));
-                        ddy = (int)Math.Round((random.NextDouble() * 2 - 1) * noise * (double)(Math.Abs(dxtmp)) * (double)(Math.Abs(deltaY) + 10) / (double)(Math.Abs(deltaX) + 10));
+                        ddx = (int)Math.Round((random.NextDouble() * 2 - 1) * (int)Math.Round(noise * (minDeriv + (random.NextDouble() * Math.Min(Math.Abs(dxtmp), Math.Abs(dytmp))))));
+                        ddy = (int)Math.Round((random.NextDouble() * 2 - 1) * (int)Math.Round(noise * (minDeriv + (random.NextDouble() * Math.Min(Math.Abs(dxtmp), Math.Abs(dytmp))))));
                     }
                     else
                     {
@@ -241,15 +251,14 @@ namespace Anjril.PokemonWorld.Generator
                     currentY = currentTile.Y;
                     if (dy == 0 || (double)Math.Abs(dx) / (double)Math.Abs(dy) > (double)Math.Abs(deltaX) / (double)Math.Abs(deltaY))
                     {
-                        Y = 0;
                         X = Math.Sign(dx);
+                        Y = 0;
                     }
                     else
                     {
                         X = 0;
                         Y = Math.Sign(dy);
                     }
-
                     nextTile = new AreaTile(currentX + X, currentY + Y);
                 } while (nextTile.Equals(lastTile));
 
@@ -279,6 +288,36 @@ namespace Anjril.PokemonWorld.Generator
                             newBorderTile = new AreaTile(nextTile.X, nextTile.Y - 1);
                             if (!passable.Contains(newBorderTile) && !border.Contains(newBorderTile)) border.Add(newBorderTile);
                             break;
+                    }
+                }
+
+
+                for (int i = 0; i < thickness; i++)
+                {
+                    HashSet<AreaTile> newPassableTiles = new HashSet<AreaTile>();
+                    foreach (AreaTile t in passable)
+                    {
+                        newPassableTiles.Add(new AreaTile(nextTile.X + 1, nextTile.Y));
+                        newPassableTiles.Add(new AreaTile(nextTile.X, nextTile.Y + 1));
+                        newPassableTiles.Add(new AreaTile(nextTile.X - 1, nextTile.Y));
+                        newPassableTiles.Add(new AreaTile(nextTile.X, nextTile.Y - 1));
+                    }
+
+                    foreach (AreaTile t in newPassableTiles)
+                    {
+                        passable.Add(t);
+                        if (border.Contains(t))
+                        {
+                            border.Remove(t);
+                            newBorderTile = new AreaTile(t.X + 1, t.Y);
+                            if (!passable.Contains(newBorderTile)) border.Add(newBorderTile);
+                            newBorderTile = new AreaTile(t.X, t.Y + 1);
+                            if (!passable.Contains(newBorderTile)) border.Add(newBorderTile);
+                            newBorderTile = new AreaTile(t.X - 1, t.Y);
+                            if (!passable.Contains(newBorderTile)) border.Add(newBorderTile);
+                            newBorderTile = new AreaTile(t.X, t.Y - 1);
+                            if (!passable.Contains(newBorderTile)) border.Add(newBorderTile);
+                        }
                     }
                 }
             }
@@ -647,7 +686,7 @@ namespace Anjril.PokemonWorld.Generator
             return border[border.Count - k - 1];
         }
 
-        private AreaTileType[,] ListToMatrix(List<AreaTile> pass, List<AreaTile> bord, int resolution, Random random, double proba)
+        /*private AreaTileType[,] ListToMatrix(List<AreaTile> pass, List<AreaTile> bord, int resolution, Random random, double proba)
         {
             int minX = 0;
             int maxX = 0;
@@ -822,7 +861,7 @@ namespace Anjril.PokemonWorld.Generator
             }
 
             return res;
-        }
+        }*/
 
         private AreaTileType[,] ListToMatrix(HashSet<AreaTile> pass, HashSet<AreaTile> bord, int resolution, Random random, double proba)
         {
@@ -1001,7 +1040,7 @@ namespace Anjril.PokemonWorld.Generator
             return res;
         }
 
-        private int GetAdjVoidTiles(AreaTile tile, List<AreaTile> passable, List<AreaTile> border, bool square)
+        /*private int GetAdjVoidTiles(AreaTile tile, List<AreaTile> passable, List<AreaTile> border, bool square)
         {
             int res = 0;
 
@@ -1029,7 +1068,7 @@ namespace Anjril.PokemonWorld.Generator
 
 
             return res;
-        }
+        }*/
 
         private int GetAdjVoidTiles(AreaTile tile, HashSet<AreaTile> passable, HashSet<AreaTile> border, bool square)
         {
@@ -1061,7 +1100,7 @@ namespace Anjril.PokemonWorld.Generator
             return res;
         }
 
-        private void RemoveBorder(List<AreaTile> passable, List<AreaTile> border, double proba, Random random)
+        /*private void RemoveBorder(List<AreaTile> passable, List<AreaTile> border, double proba, Random random)
         {
             List<AreaTile> rm = new List<AreaTile>();
 
@@ -1077,9 +1116,27 @@ namespace Anjril.PokemonWorld.Generator
             }
             border.RemoveAll(t => rm.Contains(t));
             passable.AddRange(rm);
+        }*/
+
+        private void RemoveBorder(HashSet<AreaTile> passable, HashSet<AreaTile> border, double proba, Random random)
+        {
+            List<AreaTile> rm = new List<AreaTile>();
+
+            foreach (AreaTile tile in border)
+            {
+                if (GetAdjVoidTiles(tile, passable, border, false) > 0)
+                {
+                    if (random.NextDouble() < proba)
+                    {
+                        rm.Add(tile);
+                    }
+                }
+            }
+            border.RemoveWhere(t => rm.Contains(t));
+            passable.UnionWith(rm);
         }
 
-        private void RemoveNoBorder(List<AreaTile> passable, List<AreaTile> border, double proba, Random random, bool square)
+        /*private void RemoveNoBorder(List<AreaTile> passable, List<AreaTile> border, double proba, Random random, bool square)
         {
             List<AreaTile> rm = new List<AreaTile>();
 
@@ -1095,7 +1152,7 @@ namespace Anjril.PokemonWorld.Generator
             }
             border.RemoveAll(t => rm.Contains(t));
             passable.AddRange(rm);
-        }
+        }*/
 
         private void RemoveNoBorder(HashSet<AreaTile> passable, HashSet<AreaTile> border, double proba, Random random, bool square)
         {

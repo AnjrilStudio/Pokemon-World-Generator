@@ -6,17 +6,14 @@ using System.Threading.Tasks;
 
 namespace Anjril.PokemonWorld.Generator.Enums
 {
-    enum WorldTileType
+    enum GroundTileType
     {
         Undefined,
         Sea,
-        SeaRock,
         Lake,
         Mountain,
         Ground,
         Grass,
-        Tree,
-        Rock,
         Sand,
         Street,
         Building

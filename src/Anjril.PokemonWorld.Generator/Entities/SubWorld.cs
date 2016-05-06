@@ -9,28 +9,11 @@ namespace Anjril.PokemonWorld.Generator.Entities
 {
     class SubWorld
     {
-        private WorldTileType[,] tiles;
+        public WorldTile[,] WorldTiles {get; set;}
 
         public SubWorld(int width, int height)
         {
-            tiles = new WorldTileType[width, height];
-        }
-
-        public WorldTileType get(int x, int y)
-        {
-            if (x < 0 || y < 0 || x >= WorldGen.subWidth || y >= WorldGen.subHeight)
-            {
-                return WorldTileType.Undefined;
-            }
-            return tiles[x, y];
-        }
-
-        public void set(int x, int y, WorldTileType type)
-        {
-            if (!(x < 0 || y < 0 || x >= WorldGen.subWidth || y >= WorldGen.subHeight))
-            {
-                tiles[x, y] = type;
-            }
+            WorldTiles = new WorldTile[width, height];
         }
     }
 }
