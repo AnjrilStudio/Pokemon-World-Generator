@@ -31,17 +31,17 @@ namespace Anjril.PokemonWorld.Generator
             this.Height = height;
             this.Output = output;
             this.GenerateGif = generateGif;
-            this.GeneratePng = GeneratePng;
+            this.GeneratePng = generatePng;
 
             this._random = new Random();
             this._subworlds = new SubWorld[1 + Width / subWidth, 1 + Height / subHeight];
 
-            var di = new DirectoryInfo(this.Output);
+            /*var di = new DirectoryInfo(this.Output);
 
             if (di.Exists)
                 di.Delete(true);
 
-            di.Create();
+            di.Create();*/
         }
 
         public void GenerateMap()
@@ -58,16 +58,19 @@ namespace Anjril.PokemonWorld.Generator
             {
                 for (int j = 0; j < Height; j++)
                 {
-                    SetTile(i, j, WorldTileType.Undefined) ;
+                    SetGround(i, j, GroundTileType.Undefined) ;
                 }
             }
 
             //todo faire les bords avec des montagnes et de la deepsea
 
-            Sea(200, 50, 2, 1, 10, 500);
-            Forest(100, 300, 250);
-            Town(225, 200, 40);
-            List<AreaTile> sources = new List<AreaTile>();
+            Sea(200, 80, 2, 1, 10, 500);
+            Forest(150, 300, 250);
+            Road(225, 200, 325, 150);
+            Town(225, 200, 80);
+            Town(325, 150, 50);
+
+            /*List<AreaTile> sources = new List<AreaTile>();
             sources.Add(new AreaTile(0, 0));
             sources.Add(new AreaTile(1, 0));
             sources.Add(new AreaTile(2, 0));
@@ -77,11 +80,13 @@ namespace Anjril.PokemonWorld.Generator
             sources.Add(new AreaTile(4, -2));
             sources.Add(new AreaTile(4, -3));
             sources.Add(new AreaTile(4, -4));
-            Mountain2(320, 320, 6000, sources);
+            Mountain2(320, 320, 6000, sources);*/
 
             //saveBitmap(createBitmap(), 1);
 
-            SaveJSON();
+
+            List<Bitmap> frames = new List<Bitmap>();
+            frames = FillMap();
 
             if (this.GeneratePng)
             {
@@ -90,9 +95,10 @@ namespace Anjril.PokemonWorld.Generator
 
             if (this.GenerateGif)
             {
-                List<Bitmap> frames = FillMap();
                 SaveGif(frames);
             }
+
+            SaveJSON();
 
             //SaveBitmap(createBitmap(), 2);
 
@@ -127,14 +133,29 @@ namespace Anjril.PokemonWorld.Generator
 
         #region private methods
 
-        private WorldTileType GetTile(int x, int y)
+        private WorldTile GetTile(int x, int y)
         {
-            int X = x / subWidth;
-            int Y = y / subHeight;
-            return _subworlds[X, Y].get(x - X * subWidth, y - Y * subHeight);
+            if (x >= 0 && y >= 0 && x < Width && y < Height)
+            {
+                int X = x / subWidth;
+                int Y = y / subHeight;
+                return _subworlds[X, Y].WorldTiles[x - X * subWidth, y - Y * subHeight];
+            }
+
+            return new WorldTile(GroundTileType.Undefined);
         }
 
-        private WorldTileType GetCloseTile(int x, int y, int dist)
+        private GroundTileType GetGround(int x, int y)
+        {
+            return GetTile(x, y).Ground;
+        }
+
+        private ObjectTileType GetObject(int x, int y)
+        {
+            return GetTile(x, y).Object;
+        }
+
+        private WorldTile GetCloseTile(int x, int y, int dist)
         {
             int dx = -1 + _random.Next(2) * 2;
             int dy = -1 + _random.Next(2) * 2;
@@ -155,11 +176,29 @@ namespace Anjril.PokemonWorld.Generator
             return GetTile(i, j);
         }
 
-        private void SetTile(int x, int y, WorldTileType type)
+        private void SetTile(int x, int y, GroundTileType type, ObjectTileType obj)
         {
-            int X = x / subWidth;
-            int Y = y / subHeight;
-            _subworlds[X, Y].set(x - X * subWidth, y - Y * subHeight, type);
+            if (x >= 0 && y >= 0 && x < Width && y < Height)
+            {
+                int X = x / subWidth;
+                int Y = y / subHeight;
+                _subworlds[X, Y].WorldTiles[x - X * subWidth, y - Y * subHeight] = new WorldTile(type, obj);
+            }
+        }
+
+        private void SetGround(int x, int y, GroundTileType type)
+        {
+            if (x >= 0 && y >= 0 && x < Width && y < Height)
+            {
+                int X = x / subWidth;
+                int Y = y / subHeight;
+                _subworlds[X, Y].WorldTiles[x - X * subWidth, y - Y * subHeight] = new WorldTile(type);
+            }
+        }
+
+        private void SetObject(int x, int y, ObjectTileType obj)
+        {
+            var ground = GetTile(x, y).Object = obj;
         }
 
         private List<Bitmap> FillMap()
@@ -201,25 +240,25 @@ namespace Anjril.PokemonWorld.Generator
                     }
                 }
 
-                if (GetTile(i, j) == WorldTileType.Undefined)
+                if (GetGround(i, j) == GroundTileType.Undefined)
                 {
-                    switch (GetCloseTile(i, j, 4))
+                    switch (GetCloseTile(i, j, 4).Ground)
                     {
-                        case WorldTileType.Tree: SetTile(i, j, WorldTileType.Grass); break;
-                        case WorldTileType.Grass: Meadow(i, j, 20); break;
-                        case WorldTileType.Sea: Sea2(i, j, 25); break;
-                        case WorldTileType.SeaRock: SetTile(i, j, WorldTileType.SeaRock); break;
-                        case WorldTileType.Lake: Lake(i, j, 10); break;
-                        case WorldTileType.Street: SetTile(i, j, WorldTileType.Ground); break;
-                        case WorldTileType.Building: SetTile(i, j, WorldTileType.Ground); break;
-                        case WorldTileType.Ground: Land(i, j, 10); break;
-                        case WorldTileType.Mountain: SetTile(i, j, WorldTileType.Rock); break;
-                        case WorldTileType.Rock: SetTile(i, j, WorldTileType.Rock); break;
-                        case WorldTileType.Undefined:
+                        //case GroundTileType.Tree: SetGround(i, j, GroundTileType.Grass); break;
+                        case GroundTileType.Grass: MeadowOrGrassLand(i, j, 15, 10, 0.7); break;
+                        case GroundTileType.Sea: Sea2(i, j, 25); break;
+                        //case GroundTileType.SeaRock: SetTile(i, j, GroundTileType.SeaRock); break;
+                        case GroundTileType.Lake: Lake(i, j, 8); break;
+                        case GroundTileType.Street: SetGround(i, j, GroundTileType.Ground); break;
+                        case GroundTileType.Building: SetGround(i, j, GroundTileType.Ground); break;
+                        case GroundTileType.Ground: Land(i, j, 10); break;
+                        //case GroundTileType.Mountain: SetTile(i, j, GroundTileType.Rock); break;
+                        //case GroundTileType.Rock: SetTile(i, j, GroundTileType.Rock); break;
+                        case GroundTileType.Undefined:
                             int rd = _random.Next(500);
                             if (rd < 3)
                             {
-                                Meadow(i, j, 15);
+                                MeadowOrGrassLand(i, j, 15, 10, 0.7);
                             }
                             else if (rd < 6)
                             {
@@ -249,6 +288,19 @@ namespace Anjril.PokemonWorld.Generator
             return frames;
         }
 
+        private bool hasAdjTileOfType(int x, int y, GroundTileType type)
+        {
+
+            if (GetGround(x + 1, y) == type) return true;
+            if (GetGround(x - 1, y) == type) return true;
+            if (GetGround(x, y + 1) == type) return true;
+            if (GetGround(x, y - 1) == type) return true;
+
+            return false;
+        }
+
+
+
         #endregion
 
         #region biomes
@@ -264,8 +316,8 @@ namespace Anjril.PokemonWorld.Generator
                     switch (area.GetTileType(i, j))
                     {
                         case AreaTileType.Depth: break;
-                        case AreaTileType.Ground: SetTile(x - area.Center.X + i, y - area.Center.Y + j, WorldTileType.Grass); break;
-                        case AreaTileType.Wall: SetTile(x - area.Center.X + i, y - area.Center.Y + j, WorldTileType.Tree); break;
+                        case AreaTileType.Ground: SetGround(x - area.Center.X + i, y - area.Center.Y + j, GroundTileType.Grass); break;
+                        case AreaTileType.Wall: SetTile(x - area.Center.X + i, y - area.Center.Y + j, GroundTileType.Grass, ObjectTileType.Tree); break;
                         default: break;
                     }
                 }
@@ -275,23 +327,67 @@ namespace Anjril.PokemonWorld.Generator
         private void Meadow(int x, int y, int size)
         {
             AreaGen area = new AreaGen();
-            area.MazeGen(size, 5, false, 1, 1, 0.5, 1);
+            area.MazeGen(size, 5, false, 1, 1, 0.3, 1);
             for (int i = 0; i < area.Width; i++)
             {
                 for (int j = 0; j < area.Height; j++)
                 {
                     int worldX = x - area.Center.X + i;
                     int worldY = y - area.Center.Y + j;
-                    if (GetTile(worldX, worldY) == WorldTileType.Undefined){
+                    if (GetGround(worldX, worldY) == GroundTileType.Undefined){
                         switch (area.GetTileType(i, j))
                         {
                             case AreaTileType.Depth: break;
-                            case AreaTileType.Ground: SetTile(worldX, worldY, WorldTileType.Grass); break;
-                            case AreaTileType.Wall: SetTile(worldX, worldY, WorldTileType.Tree); break;
+                            case AreaTileType.Ground: SetGround(worldX, worldY, GroundTileType.Grass); break;
+                            case AreaTileType.Wall: SetTile(worldX, worldY, GroundTileType.Grass, ObjectTileType.Bush); break;
                             default: break;
+                        }
+
+                        if (hasAdjTileOfType(worldX, worldY, GroundTileType.Ground))
+                        {
+                            SetObject(worldX, worldY, ObjectTileType.Tree);
                         }
                     }
                 }
+            }
+        }
+
+        private void GrassLand(int x, int y, int size)
+        {
+            AreaGen area = new AreaGen();
+            area.MazeGen(size, 5, false, 1, 1, 1, 1);
+            for (int i = 0; i < area.Width; i++)
+            {
+                for (int j = 0; j < area.Height; j++)
+                {
+                    int worldX = x - area.Center.X + i;
+                    int worldY = y - area.Center.Y + j;
+                    if (GetGround(worldX, worldY) == GroundTileType.Undefined)
+                    {
+                        switch (area.GetTileType(i, j))
+                        {
+                            case AreaTileType.Depth: break;
+                            case AreaTileType.Ground: SetTile(worldX, worldY, GroundTileType.Grass, ObjectTileType.HighGrass); break;
+                            default: break;
+                        }
+
+                        if (hasAdjTileOfType(worldX, worldY, GroundTileType.Ground))
+                        {
+                            SetObject(worldX, worldY, ObjectTileType.Tree);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void MeadowOrGrassLand(int x, int y, int size1, int size2, double meadowChance)
+        {
+            if (_random.NextDouble() < meadowChance)
+            {
+                Meadow(x, y, size1);
+            } else
+            {
+                GrassLand(x, y, size2);
             }
         }
 
@@ -305,13 +401,13 @@ namespace Anjril.PokemonWorld.Generator
                 {
                     int worldX = x - area.Center.X + i;
                     int worldY = y - area.Center.Y + j;
-                    if (GetTile(worldX, worldY) == WorldTileType.Undefined)
+                    if (GetGround(worldX, worldY) == GroundTileType.Undefined)
                     {
                         switch (area.GetTileType(i, j))
                         {
                             case AreaTileType.Depth: break;
-                            case AreaTileType.Ground: SetTile(worldX, worldY, WorldTileType.Ground); break;
-                            case AreaTileType.Wall: SetTile(worldX, worldY, WorldTileType.Rock); break;
+                            case AreaTileType.Ground: SetGround(worldX, worldY, GroundTileType.Ground); break;
+                            case AreaTileType.Wall: SetTile(worldX, worldY, GroundTileType.Ground, ObjectTileType.Rock); break;
                             default: break;
                         }
                     }
@@ -329,13 +425,13 @@ namespace Anjril.PokemonWorld.Generator
                 {
                     int worldX = x - area.Center.X + i;
                     int worldY = y - area.Center.Y + j;
-                    if (GetTile(worldX, worldY) == WorldTileType.Undefined)
+                    if (GetGround(worldX, worldY) == GroundTileType.Undefined)
                     {
                         switch (area.GetTileType(i, j))
                         {
                             case AreaTileType.Depth: break;
-                            case AreaTileType.Ground: SetTile(worldX, worldY, WorldTileType.Sea); break;
-                            case AreaTileType.Wall: SetTile(worldX, worldY, WorldTileType.Ground); break;
+                            case AreaTileType.Ground: SetGround(worldX, worldY, GroundTileType.Sea); break;
+                            case AreaTileType.Wall: SetGround(worldX, worldY, GroundTileType.Ground); break;
                             default: break;
                         }
                     }
@@ -353,22 +449,22 @@ namespace Anjril.PokemonWorld.Generator
                 {
                     int worldX = x - area.Center.X + i;
                     int worldY = y - area.Center.Y + j;
-                    if (GetTile(worldX, worldY) == WorldTileType.Undefined || GetTile(worldX, worldY) == WorldTileType.Grass || GetTile(worldX, worldY) == WorldTileType.Ground)
+                    if (GetGround(worldX, worldY) == GroundTileType.Undefined || GetGround(worldX, worldY) == GroundTileType.Grass || GetGround(worldX, worldY) == GroundTileType.Ground)
                     {
                         switch (area.GetTileType(i, j))
                         {
                             case AreaTileType.Depth: break;
                             case AreaTileType.Ground:
-                                if (GetTile(worldX, worldY) == WorldTileType.Undefined)
+                                if (GetGround(worldX, worldY) == GroundTileType.Undefined)
                                 {
-                                    SetTile(worldX, worldY, WorldTileType.Sea);
+                                    SetGround(worldX, worldY, GroundTileType.Sea);
                                 }
                                 else
                                 {
                                     Beach(worldX, worldY, 10);
                                 }
                                 break;
-                            case AreaTileType.Wall: SetTile(worldX, worldY, WorldTileType.Ground); break;
+                            case AreaTileType.Wall: SetGround(worldX, worldY, GroundTileType.Ground); break;
                             default: break;
                         }
                     }
@@ -386,13 +482,13 @@ namespace Anjril.PokemonWorld.Generator
                 {
                     int worldX = x - area.Center.X + i;
                     int worldY = y - area.Center.Y + j;
-                    if (GetTile(worldX, worldY) == WorldTileType.Undefined)
+                    if (GetGround(worldX, worldY) == GroundTileType.Undefined)
                     {
                         switch (area.GetTileType(i, j))
                         {
                             case AreaTileType.Depth: break;
-                            case AreaTileType.Ground: SetTile(worldX, worldY, WorldTileType.Lake);break;
-                            case AreaTileType.Wall: SetTile(worldX, worldY, WorldTileType.Ground); break;
+                            case AreaTileType.Ground: SetGround(worldX, worldY, GroundTileType.Lake);break;
+                            case AreaTileType.Wall: SetTile(worldX, worldY, GroundTileType.Lake, ObjectTileType.Rock); break;
                             default: break;
                         }
                     }
@@ -410,13 +506,13 @@ namespace Anjril.PokemonWorld.Generator
                 {
                     int worldX = x - area.Center.X + i;
                     int worldY = y - area.Center.Y + j;
-                    if (GetTile(worldX, worldY) == WorldTileType.Undefined || GetTile(worldX, worldY) == WorldTileType.Sea)
+                    if (GetGround(worldX, worldY) == GroundTileType.Undefined || GetGround(worldX, worldY) == GroundTileType.Sea)
                     {
                         switch (area.GetTileType(i, j))
                         {
                             case AreaTileType.Depth: break;
-                            case AreaTileType.Ground: SetTile(worldX, worldY, WorldTileType.Sand); break;
-                            case AreaTileType.Wall: SetTile(worldX, worldY, WorldTileType.Ground); break;
+                            case AreaTileType.Ground: SetGround(worldX, worldY, GroundTileType.Sand); break;
+                            case AreaTileType.Wall: SetGround(worldX, worldY, GroundTileType.Ground); break;
                             default: break;
                         }
                     }
@@ -435,8 +531,8 @@ namespace Anjril.PokemonWorld.Generator
                     switch (area.GetTileType(i, j))
                     {
                         case AreaTileType.Depth: break;
-                        case AreaTileType.Ground: SetTile(x - area.Center.X + i, y - area.Center.Y + j, WorldTileType.Sea); break;
-                        case AreaTileType.Wall: SetTile(x - area.Center.X + i, y - area.Center.Y + j, WorldTileType.SeaRock); break;
+                        case AreaTileType.Ground: SetGround(x - area.Center.X + i, y - area.Center.Y + j, GroundTileType.Sea); break;
+                        case AreaTileType.Wall: SetTile(x - area.Center.X + i, y - area.Center.Y + j, GroundTileType.Sea, ObjectTileType.Rock); break;
                         default: break;
                     }
                 }
@@ -456,8 +552,8 @@ namespace Anjril.PokemonWorld.Generator
                     switch (area.GetTileType(i, j))
                     {
                         case AreaTileType.Depth: break;
-                        case AreaTileType.Ground: SetTile(x - area.Center.X + i, y - area.Center.Y + j, WorldTileType.Ground); break;
-                        case AreaTileType.Wall: SetTile(x - area.Center.X + i, y - area.Center.Y + j, WorldTileType.Mountain); break;
+                        case AreaTileType.Ground: SetGround(x - area.Center.X + i, y - area.Center.Y + j, GroundTileType.Ground); break;
+                        case AreaTileType.Wall: SetGround(x - area.Center.X + i, y - area.Center.Y + j, GroundTileType.Mountain); break;
                         default: break;
                     }
                 }
@@ -477,8 +573,8 @@ namespace Anjril.PokemonWorld.Generator
                     switch (area.GetTileType(i, j))
                     {
                         case AreaTileType.Depth: break;
-                        case AreaTileType.Ground: SetTile(x - area.Center.X + i, y - area.Center.Y + j, WorldTileType.Ground); break;
-                        case AreaTileType.Wall: SetTile(x - area.Center.X + i, y - area.Center.Y + j, WorldTileType.Mountain); break;
+                        case AreaTileType.Ground: SetGround(x - area.Center.X + i, y - area.Center.Y + j, GroundTileType.Ground); break;
+                        case AreaTileType.Wall: SetGround(x - area.Center.X + i, y - area.Center.Y + j, GroundTileType.Mountain); break;
                         default: break;
                     }
                 }
@@ -490,7 +586,7 @@ namespace Anjril.PokemonWorld.Generator
         private void Town(int x, int y, int size)
         {
             AreaGen area = new AreaGen();
-            area.MazeGen(size, 10, false, 4, 1, 0, 0);
+            area.MazeGen(size, 8, false, 3, 1, 0.1, 0);
             for (int i = 0; i < area.Width; i++)
             {
                 for (int j = 0; j < area.Height; j++)
@@ -498,8 +594,27 @@ namespace Anjril.PokemonWorld.Generator
                     switch (area.GetTileType(i, j))
                     {
                         case AreaTileType.Depth: break;
-                        case AreaTileType.Ground: SetTile(x - area.Center.X + i, y - area.Center.Y + j, WorldTileType.Street); break;
-                        case AreaTileType.Wall: SetTile(x - area.Center.X + i, y - area.Center.Y + j, WorldTileType.Building); break;
+                        case AreaTileType.Ground: SetGround(x - area.Center.X + i, y - area.Center.Y + j, GroundTileType.Street); break;
+                        case AreaTileType.Wall: SetGround(x - area.Center.X + i, y - area.Center.Y + j, GroundTileType.Building); break;
+                        default: break;
+                    }
+                }
+            }
+        }
+
+        private void Road(int x, int y, int x2, int y2)
+        {
+            AreaGen area = new AreaGen();
+            area.LineGen(x2 - x, y2 - y, 1, 1, 1, 0, 5);
+            for (int i = 0; i < area.Width; i++)
+            {
+                for (int j = 0; j < area.Height; j++)
+                {
+                    switch (area.GetTileType(i, j))
+                    {
+                        case AreaTileType.Depth: break;
+                        case AreaTileType.Ground: SetGround(x - area.Center.X + i, y - area.Center.Y + j, GroundTileType.Street); break;
+                        case AreaTileType.Wall: break;
                         default: break;
                     }
                 }
@@ -518,21 +633,26 @@ namespace Anjril.PokemonWorld.Generator
                 for (int j = 0; j < Height; j++)
                 {
                     Color color;
-                    switch (GetTile(i, j))
+                    switch (GetGround(i, j))
                     {
-                        case WorldTileType.Tree: color = Color.DarkGreen; break;
-                        case WorldTileType.Grass: color = Color.Lime; break;
-                        case WorldTileType.Sea: color = Color.Blue; break;
-                        case WorldTileType.SeaRock: color = Color.DarkSlateBlue; break;
-                        case WorldTileType.Lake: color = Color.Blue; break;
-                        case WorldTileType.Street: color = Color.LightGray; break;
-                        case WorldTileType.Building: color = Color.Gray; break;
-                        case WorldTileType.Ground: color = Color.Goldenrod; break;
-                        case WorldTileType.Mountain: color = Color.Brown; break;
-                        case WorldTileType.Rock: color = Color.Brown; break;
-                        case WorldTileType.Sand: color = Color.LightGoldenrodYellow; break;
-                        case WorldTileType.Undefined: color = Color.Black; break;
+                        case GroundTileType.Grass: color = Color.Lime; break;
+                        case GroundTileType.Sea: color = Color.Blue; break;
+                        case GroundTileType.Lake: color = Color.Blue; break;
+                        case GroundTileType.Street: color = Color.LightGray; break;
+                        case GroundTileType.Building: color = Color.Gray; break;
+                        case GroundTileType.Ground: color = Color.Goldenrod; break;
+                        case GroundTileType.Mountain: color = Color.Brown; break;
+                        case GroundTileType.Sand: color = Color.LightGoldenrodYellow; break;
+                        case GroundTileType.Undefined: color = Color.Black; break;
                         default: color = Color.Gray; break;
+                    }
+
+                    switch (GetObject(i, j))
+                    {
+                        case ObjectTileType.Tree: color = Color.DarkGreen; break;
+                        case ObjectTileType.Rock: color = Color.Brown; break;
+                        case ObjectTileType.HighGrass: color = Color.LimeGreen; break;
+                        case ObjectTileType.Bush: color = Color.Green; break;
                     }
 
                     Bmp.SetPixel(i, j, color);
@@ -544,14 +664,14 @@ namespace Anjril.PokemonWorld.Generator
 
         private void SaveBitmap(Bitmap bmp, int id)
         {
-            var path = Path.Combine(Output, String.Format("map{0}.png", id));
+            var path = Path.Combine(Output, String.Format("map{0}_{1}.png", id, DateTime.Now.Ticks));
 
             bmp.Save(path);
         }
 
         private void SaveGif(List<Bitmap> frames)
         {
-            var path = Path.Combine(Output, "map.gif");
+            var path = Path.Combine(Output, String.Format("map_{0}.gif", DateTime.Now.Ticks));
 
             AnimatedGifEncoder e = new AnimatedGifEncoder();
             e.Start(path);
@@ -572,12 +692,12 @@ namespace Anjril.PokemonWorld.Generator
             {
                 for (int j = 0; j < Height; j++)
                 {
-                    s += ((i==0 && j==0)?"":",") + (int)(GetTile(j, i)+1);
+                    s += ((i==0 && j==0)?"":",") + (int)(GetGround(j, i)+1) + "." + (int)(GetObject(j, i) + 1);
                 }
             }
             s += "]";
 
-            var path = Path.Combine(Output, "map.json");
+            var path = Path.Combine(Output, String.Format("map_{0}.json", DateTime.Now.Ticks));
 
             System.IO.StreamWriter file = new System.IO.StreamWriter(path);
             file.WriteLine(s);

@@ -19,7 +19,7 @@ namespace Anjril.PokemonWorld.Generator.Test
 
             Console.Write("Generating map");
 
-            var generator = new WorldGen(400, 400, "Generated", true, true);
+            var generator = new WorldGen(400, 400, "Generated", true, false);
 
             var generationResult = Task.Run(() => 
             {
