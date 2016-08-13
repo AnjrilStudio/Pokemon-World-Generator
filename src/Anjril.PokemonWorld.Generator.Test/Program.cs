@@ -19,9 +19,9 @@ namespace Anjril.PokemonWorld.Generator.Test
 
             Console.Write("Generating map");
 
-            var generator = new WorldGen(400, 400, "Generated", true, false);
+            var generator = new WorldGen(400, 400, "Generated", true, true);
 
-            var generationResult = Task.Run(() => 
+            var generationResult = Task.Run(() =>
             {
                 var chrono = Stopwatch.StartNew();
 
@@ -33,12 +33,12 @@ namespace Anjril.PokemonWorld.Generator.Test
             });
 
             int nbLoop = 14;
-            while(!generationResult.IsCompleted)
+            while (!generationResult.IsCompleted)
             {
                 Console.Write(".");
                 nbLoop++;
 
-                if(nbLoop == 23)
+                if (nbLoop == 23)
                 {
                     nbLoop = 0;
                     Console.WriteLine();
