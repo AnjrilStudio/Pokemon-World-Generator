@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AreaGen.cs" />
+    <Compile Include="Gen.cs" />
     <Compile Include="Entities\AreaTile.cs" />
     <Compile Include="Entities\WorldTile.cs" />
     <Compile Include="Enums\ObjectTileType.cs" />
@@ -60,6 +61,7 @@
     <Compile Include="Enums\GroundTileType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Entities\SubWorld.cs" />
+    <Compile Include="ArenaGen.cs" />
     <Compile Include="WorldGen.cs" />
   </ItemGroup>
   <ItemGroup>

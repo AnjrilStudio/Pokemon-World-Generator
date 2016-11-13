@@ -2,7 +2,7 @@
 
 namespace Anjril.PokemonWorld.Generator.Entities
 {
-    class WorldTile
+    public class WorldTile
     {
         public GroundTileType Ground { get; private set; }
         public ObjectTileType Object { get; set; }

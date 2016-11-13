@@ -1,6 +1,6 @@
 ﻿namespace Anjril.PokemonWorld.Generator.Entities
 {
-    enum ObjectTileType
+    public enum ObjectTileType
     {
         None,
         Tree,

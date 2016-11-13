@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Anjril.PokemonWorld.Generator.Entities
 {
-    class AreaTile : IEquatable<AreaTile>
+    public class AreaTile : IEquatable<AreaTile>
     {
         public int X { get; set; }
         public int Y { get; set; }

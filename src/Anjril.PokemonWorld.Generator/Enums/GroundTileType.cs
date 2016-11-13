@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Anjril.PokemonWorld.Generator.Enums
 {
-    enum GroundTileType
+    public enum GroundTileType
     {
         Undefined,
         Sea,

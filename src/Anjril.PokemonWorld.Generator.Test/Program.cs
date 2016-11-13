@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Anjril.PokemonWorld.Generator.Entities;
+using Anjril.PokemonWorld.Generator.Enums;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -19,13 +21,27 @@ namespace Anjril.PokemonWorld.Generator.Test
 
             Console.Write("Generating map");
 
-            var generator = new WorldGen(400, 400, "Generated", true, false);
+            //var generator = new WorldGen(400, 400, "Generated", true, false);
+            var pattern = new GroundTileType[3, 4];
+            pattern[0, 0] = GroundTileType.Ground;
+            pattern[1, 0] = GroundTileType.Grass;
+            pattern[2, 0] = GroundTileType.Ground;
+            pattern[0, 1] = GroundTileType.Ground;
+            pattern[1, 1] = GroundTileType.Grass;
+            pattern[2, 1] = GroundTileType.Grass;
+            pattern[0, 2] = GroundTileType.Ground;
+            pattern[1, 2] = GroundTileType.Grass;
+            pattern[2, 2] = GroundTileType.Grass;
+            pattern[0, 3] = GroundTileType.Grass;
+            pattern[1, 3] = GroundTileType.Ground;
+            pattern[2, 3] = GroundTileType.Ground;
+            var generator = new ArenaGen(pattern, 4, "Generated", true, false);
 
             var generationResult = Task.Run(() => 
             {
                 var chrono = Stopwatch.StartNew();
 
-                generator.GenerateMap();
+                generator.Generate();
 
                 chrono.Stop();
 

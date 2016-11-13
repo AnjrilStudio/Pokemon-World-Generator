@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Anjril.PokemonWorld.Generator.Entities
 {
-    class SubWorld
+    public class SubWorld
     {
         public WorldTile[,] WorldTiles {get; set;}
 

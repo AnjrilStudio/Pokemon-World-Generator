@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Anjril.PokemonWorld.Generator.Enums
 {
-    enum AreaTileType
+    public enum AreaTileType
     {
         Ground,
         Wall,
