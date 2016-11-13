@@ -12,11 +12,15 @@ namespace Anjril.PokemonWorld.Generator
 {
     public abstract class Gen
     {
-        public const int subWidth = 100;
-        public const int subHeight = 100;
+        protected const int SUB_WIDTH = 100;
+        protected const int SUB_HEIGHT = 100;
+        protected const string ARCHIVE_PATH = "archives";
 
-        public int Width { get; set; }
-        public int Height { get; set; }
+        protected int _width;
+        protected int _height;
+        protected string _outputPath;
+        protected bool _generateGif;
+        protected bool _generatePng;
 
         protected SubWorld[,] _subworlds;
         protected Random _random;
@@ -26,11 +30,11 @@ namespace Anjril.PokemonWorld.Generator
 
         protected WorldTile GetTile(int x, int y)
         {
-            if (x >= 0 && y >= 0 && x < Width && y < Height)
+            if (x >= 0 && y >= 0 && x < _width && y < _height)
             {
-                int X = x / subWidth;
-                int Y = y / subHeight;
-                return _subworlds[X, Y].WorldTiles[x - X * subWidth, y - Y * subHeight];
+                int X = x / SUB_WIDTH;
+                int Y = y / SUB_HEIGHT;
+                return _subworlds[X, Y].WorldTiles[x - X * SUB_WIDTH, y - Y * SUB_HEIGHT];
             }
 
             return new WorldTile(GroundTileType.Undefined);
@@ -69,21 +73,21 @@ namespace Anjril.PokemonWorld.Generator
 
         protected void SetTile(int x, int y, GroundTileType type, ObjectTileType obj)
         {
-            if (x >= 0 && y >= 0 && x < Width && y < Height)
+            if (x >= 0 && y >= 0 && x < _width && y < _height)
             {
-                int X = x / subWidth;
-                int Y = y / subHeight;
-                _subworlds[X, Y].WorldTiles[x - X * subWidth, y - Y * subHeight] = new WorldTile(type, obj);
+                int X = x / SUB_WIDTH;
+                int Y = y / SUB_HEIGHT;
+                _subworlds[X, Y].WorldTiles[x - X * SUB_WIDTH, y - Y * SUB_HEIGHT] = new WorldTile(type, obj);
             }
         }
 
         protected void SetGround(int x, int y, GroundTileType type)
         {
-            if (x >= 0 && y >= 0 && x < Width && y < Height)
+            if (x >= 0 && y >= 0 && x < _width && y < _height)
             {
-                int X = x / subWidth;
-                int Y = y / subHeight;
-                _subworlds[X, Y].WorldTiles[x - X * subWidth, y - Y * subHeight] = new WorldTile(type);
+                int X = x / SUB_WIDTH;
+                int Y = y / SUB_HEIGHT;
+                _subworlds[X, Y].WorldTiles[x - X * SUB_WIDTH, y - Y * SUB_HEIGHT] = new WorldTile(type);
             }
         }
 
@@ -107,11 +111,11 @@ namespace Anjril.PokemonWorld.Generator
 
         public GroundTileType[,] GetGroundMatrix()
         {
-            var matrix = new GroundTileType[Width, Height];
+            var matrix = new GroundTileType[_width, _height];
 
-            for (int i = 0; i < Width; i++)
+            for (int i = 0; i < _width; i++)
             {
-                for (int j = 0; j < Height; j++)
+                for (int j = 0; j < _height; j++)
                 {
                     matrix[i, j] = GetGround(i, j);
                 }
@@ -122,10 +126,10 @@ namespace Anjril.PokemonWorld.Generator
 
         protected Bitmap CreateBitmap()
         {
-            Bitmap Bmp = new Bitmap(Width, Height);
-            for (int i = 0; i < Width; i++)
+            Bitmap Bmp = new Bitmap(_width, _height);
+            for (int i = 0; i < _width; i++)
             {
-                for (int j = 0; j < Height; j++)
+                for (int j = 0; j < _height; j++)
                 {
                     Color color;
                     switch (GetGround(i, j))
@@ -183,9 +187,9 @@ namespace Anjril.PokemonWorld.Generator
         protected void SaveJSON()
         {
             String s = "[";
-            for (int i = 0; i < Width; i++)
+            for (int i = 0; i < _width; i++)
             {
-                for (int j = 0; j < Height; j++)
+                for (int j = 0; j < _height; j++)
                 {
                     s += ((i == 0 && j == 0) ? "" : ",") + (int)(GetGround(j, i) + 1) + "." + (int)(GetObject(j, i) + 1);
                 }
@@ -199,6 +203,26 @@ namespace Anjril.PokemonWorld.Generator
 
             file.Close();
 
+        }
+
+        protected void RenameFile(string fileName, DateTime now)
+        {
+            string currentName = Path.Combine(_outputPath, fileName);
+
+            var fi = new FileInfo(currentName);
+
+            if (fi.Exists)
+            {
+                string newName = String.Format("{0}_{1}", now.ToString("yyyyMMddHHmmss"), fi.Name);
+
+                var di = new DirectoryInfo(Path.Combine(this._outputPath, ARCHIVE_PATH));
+                if (!di.Exists)
+                {
+                    di.Create();
+                }
+
+                File.Move(currentName, Path.Combine(this._outputPath, ARCHIVE_PATH, newName));
+            }
         }
 
         #endregion

@@ -12,44 +12,51 @@ namespace Anjril.PokemonWorld.Generator
 {
     public class WorldGen : Gen
     {
-        public bool GenerateGif { get; set; }
-        public bool GeneratePng { get; set; }
 
         public WorldGen(int width, int height, string output,
             bool generatePng = false, bool generateGif = false)
         {
-            this.Width = width;
-            this.Height = height;
-            this.Output = output;
-            this.GenerateGif = generateGif;
-            this.GeneratePng = generatePng;
+            this._width = width;
+            this._height = height;
+            this._outputPath = output;
+            this._generateGif = generateGif;
+            this._generatePng = generatePng;
 
             this._random = new Random();
-            this._subworlds = new SubWorld[1 + Width / subWidth, 1 + Height / subHeight];
+            this._subworlds = new SubWorld[1 + _width / SUB_WIDTH, 1 + _height / SUB_HEIGHT];
 
-            /*var di = new DirectoryInfo(this.Output);
+            var di = new DirectoryInfo(this._outputPath);
 
-            if (di.Exists)
-                di.Delete(true);
+            if (!di.Exists)
+            {
+                di.Create();
+            }
+            else
+            {
+                var now = DateTime.Now;
 
-            di.Create();*/
+                foreach (var fi in di.GetFiles())
+                {
+                    RenameFile(fi.Name, now);
+                }
+            }
         }
 
         public void Generate()
         {
-            for (int i = 0; i <= Width / subWidth; i++)
+            for (int i = 0; i <= _width / SUB_WIDTH; i++)
             {
-                for (int j = 0; j <= Height / subHeight; j++)
+                for (int j = 0; j <= _height / SUB_HEIGHT; j++)
                 {
-                    _subworlds[i, j] = new SubWorld(subWidth, subHeight);
+                    _subworlds[i, j] = new SubWorld(SUB_WIDTH, SUB_HEIGHT);
                 }
             }
 
-            for (int i = 0; i < Width; i++)
+            for (int i = 0; i < _width; i++)
             {
-                for (int j = 0; j < Height; j++)
+                for (int j = 0; j < _height; j++)
                 {
-                    SetGround(i, j, GroundTileType.Undefined) ;
+                    SetGround(i, j, GroundTileType.Undefined);
                 }
             }
 
@@ -73,18 +80,15 @@ namespace Anjril.PokemonWorld.Generator
             sources.Add(new AreaTile(4, -4));
             Mountain2(320, 320, 6000, sources);*/
 
-            //saveBitmap(createBitmap(), 1);
-
-
             List<Bitmap> frames = new List<Bitmap>();
             frames = FillMap();
 
-            if (this.GeneratePng)
+            if (this._generatePng)
             {
                 SaveBitmap(CreateBitmap(), 1);
             }
 
-            if (this.GenerateGif)
+            if (this._generateGif)
             {
                 SaveGif(frames);
             }
@@ -133,16 +137,16 @@ namespace Anjril.PokemonWorld.Generator
             List<Bitmap> frames = new List<Bitmap>();
             bool dir = false;
             frames.Add(CreateBitmap());
-            while (k < Width * Height)
+            while (k < _width * _height)
             {
                 if (dir)
                 {
                     i++;
-                    if (i >= Width)
+                    if (i >= _width)
                     {
                         i = 0;
                         j++;
-                        if (j >= Height)
+                        if (j >= _height)
                         {
                             j = 0;
                         }
@@ -154,11 +158,11 @@ namespace Anjril.PokemonWorld.Generator
                     j--;
                     if (j < 0)
                     {
-                        j = Height - 1;
+                        j = _height - 1;
                         i--;
                         if (i < 0)
                         {
-                            i = Width - 1;
+                            i = _width - 1;
                         }
                     }
                 }
@@ -196,8 +200,8 @@ namespace Anjril.PokemonWorld.Generator
                     }
 
                     k = 0;
-                    i = _random.Next(Width);
-                    j = _random.Next(Height);
+                    i = _random.Next(_width);
+                    j = _random.Next(_height);
                     dir = !dir;
                     count++;
                     if (count % 100 == 0) frames.Add(CreateBitmap());
@@ -210,7 +214,6 @@ namespace Anjril.PokemonWorld.Generator
             frames.Add(CreateBitmap());
             return frames;
         }
-        
         #endregion
 
         #region biomes
@@ -244,7 +247,8 @@ namespace Anjril.PokemonWorld.Generator
                 {
                     int worldX = x - area.Center.X + i;
                     int worldY = y - area.Center.Y + j;
-                    if (GetGround(worldX, worldY) == GroundTileType.Undefined){
+                    if (GetGround(worldX, worldY) == GroundTileType.Undefined)
+                    {
                         switch (area.GetTileType(i, j))
                         {
                             case AreaTileType.Depth: break;
@@ -295,7 +299,8 @@ namespace Anjril.PokemonWorld.Generator
             if (_random.NextDouble() < meadowChance)
             {
                 Meadow(x, y, size1);
-            } else
+            }
+            else
             {
                 GrassLand(x, y, size2);
             }
@@ -397,7 +402,7 @@ namespace Anjril.PokemonWorld.Generator
                         switch (area.GetTileType(i, j))
                         {
                             case AreaTileType.Depth: break;
-                            case AreaTileType.Ground: SetGround(worldX, worldY, GroundTileType.Lake);break;
+                            case AreaTileType.Ground: SetGround(worldX, worldY, GroundTileType.Lake); break;
                             case AreaTileType.Wall: SetTile(worldX, worldY, GroundTileType.Lake, ObjectTileType.Rock); break;
                             default: break;
                         }

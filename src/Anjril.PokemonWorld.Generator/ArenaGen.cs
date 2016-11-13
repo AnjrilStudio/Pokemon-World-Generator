@@ -23,29 +23,29 @@ namespace Anjril.PokemonWorld.Generator
         {
             _pattern = pattern;
             _sizeFactor = sizeFactor;
-            this.Width = pattern.GetLength(0) * (sizeFactor+1);
-            this.Height = pattern.GetLength(1) * (sizeFactor+1);
+            this._width = pattern.GetLength(0) * (sizeFactor+1);
+            this._height = pattern.GetLength(1) * (sizeFactor+1);
             this.Output = output;
             this.GenerateGif = generateGif;
             this.GeneratePng = generatePng;
 
             this._random = new Random();
-            this._subworlds = new SubWorld[1 + Width / subWidth, 1 + Height / subHeight];
+            this._subworlds = new SubWorld[1 + _width / SUB_WIDTH, 1 + _height / SUB_HEIGHT];
         }
 
         public void Generate()
         {
-            for (int i = 0; i <= Width / subWidth; i++)
+            for (int i = 0; i <= _width / SUB_WIDTH; i++)
             {
-                for (int j = 0; j <= Height / subHeight; j++)
+                for (int j = 0; j <= _height / SUB_HEIGHT; j++)
                 {
-                    _subworlds[i, j] = new SubWorld(subWidth, subHeight);
+                    _subworlds[i, j] = new SubWorld(SUB_WIDTH, SUB_HEIGHT);
                 }
             }
 
-            for (int i = 0; i < Width; i++)
+            for (int i = 0; i < _width; i++)
             {
-                for (int j = 0; j < Height; j++)
+                for (int j = 0; j < _height; j++)
                 {
                     SetGround(i, j, GroundTileType.Undefined) ;
                 }
@@ -105,16 +105,16 @@ namespace Anjril.PokemonWorld.Generator
             List<Bitmap> frames = new List<Bitmap>();
             bool dir = false;
             frames.Add(CreateBitmap());
-            while (k < Width * Height)
+            while (k < _width * _height)
             {
                 if (dir)
                 {
                     i++;
-                    if (i >= Width)
+                    if (i >= _width)
                     {
                         i = 0;
                         j++;
-                        if (j >= Height)
+                        if (j >= _height)
                         {
                             j = 0;
                         }
@@ -126,11 +126,11 @@ namespace Anjril.PokemonWorld.Generator
                     j--;
                     if (j < 0)
                     {
-                        j = Height - 1;
+                        j = _height - 1;
                         i--;
                         if (i < 0)
                         {
-                            i = Width - 1;
+                            i = _width - 1;
                         }
                     }
                 }
@@ -158,8 +158,8 @@ namespace Anjril.PokemonWorld.Generator
                     }
 
                     k = 0;
-                    i = _random.Next(Width);
-                    j = _random.Next(Height);
+                    i = _random.Next(_width);
+                    j = _random.Next(_height);
                     dir = !dir;
                     count++;
                     if (count % 100 == 0) frames.Add(CreateBitmap());
